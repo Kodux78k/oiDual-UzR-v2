@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>DUAL // FUSION MONOLITH REFRACTED</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020202">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('Service Worker Registered'));
+  }
+</script>
+
+  <!-- Dependências -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- TOKENS & VARIÁVEIS (Premium) --- */
+    :root {
+      --bg: #050505;
+      --surface: #0c0c0e;
+      --glass: rgba(15, 15, 20, 0.82);
+      --border: rgba(255, 255, 255, 0.08);
+      --cyan: #00f2ff;
+      --magenta: #bd00ff;
+      --gold: #F2C75C;
+      --ease: cubic-bezier(0.23, 1, 0.32, 1);
+      
+      --card-width-open: min(900px, 94vw);
+      --card-height-open: min(700px, 85vh);
+      --card-width-closed: 340px;
+      --card-height-closed: 76px;
+      --stealth-size: 52px;
+      
+      --shadow-xxl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    /* --- BASE & BACKGROUND --- */
+    body { 
+      background: var(--bg); 
+      margin: 0; 
+      overflow: hidden; 
+      color: white; 
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .void-ambient {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: 
+        radial-gradient(circle at 15% 115%, rgba(189,0,255,0.08), transparent 40%),
+        radial-gradient(circle at 85% -15%, rgba(0,242,255,0.06), transparent 40%),
+        linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* --- O MONÓLITO (CSS REFINADO) --- */
+    #monolith-card {
+      position: fixed;
+      z-index: 100;
+      background: var(--glass);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-xxl);
+      will-change: transform, width, height, opacity, top, left;
+      transition: 
+        width 0.6s var(--ease),
+        height 0.6s var(--ease),
+        transform 0.6s var(--ease),
+        top 0.6s var(--ease),
+        left 0.6s var(--ease),
+        border-radius 0.5s var(--ease),
+        opacity 0.4s ease;
+    }
+
+    /* ESTADO: CENTRO */
+    .state-centered {
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+    }
+
+    .mode-closed {
+      width: var(--card-width-closed);
+      height: var(--card-height-closed);
+      border-radius: 22px;
+    }
+
+    .mode-open {
+      width: var(--card-width-open);
+      height: var(--card-height-open);
+      border-radius: 28px;
+    }
+
+    /* ESTADO: STEALTH (Lock) */
+    .state-stealth {
+      top: 24px !important;
+      left: 24px !important;
+      transform: translate(0, 0) !important;
+      width: var(--stealth-size) !important;
+      height: var(--stealth-size) !important;
+      border-radius: 50% !important;
+      opacity: 0.15;
+      cursor: pointer;
+      border-color: rgba(0, 242, 255, 0.2);
+    }
+
+    .state-stealth:hover {
+      opacity: 1;
+      transform: scale(1.1) !important;
+      border-color: var(--cyan);
+      box-shadow: 0 0 25px rgba(0, 242, 255, 0.3);
+    }
+
+    /* Transições de Conteúdo */
+    .content-wrapper { 
+      width: 100%; height: 100%; 
+      display: flex; flex-direction: column; 
+      transition: opacity 0.3s var(--ease), transform 0.4s var(--ease);
+    }
+    .state-stealth .content-wrapper { opacity: 0; transform: scale(0.8); pointer-events: none; }
+    
+    .stealth-indicator {
+      position: absolute; inset: 0; 
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+      color: var(--cyan);
+    }
+    .state-stealth .stealth-indicator { opacity: 1; }
+
+    /* Estilização Interna */
+    .header-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.5);
+      transition: all 0.2s ease;
+    }
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .header-btn.active-cyan:hover { color: var(--cyan); border-color: rgba(0, 242, 255, 0.3); }
+    .header-btn.active-purple:hover { color: var(--magenta); border-color: rgba(189, 0, 255, 0.3); }
+
+    .input-field {
+      width: 100%; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border);
+      color: var(--cyan); padding: 12px 16px; border-radius: 14px; 
+      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+      transition: all 0.2s; outline: none;
+    }
+    .input-field:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
+
+    /* Scrollbar Custom */
+    #body-content::-webkit-scrollbar { width: 4px; }
+    #body-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    /* Animações */
+    @keyframes pulse-cyan { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .animate-pulse-cyan { animation: pulse-cyan 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="selection:bg-dual-cyan selection:text-black">
+
+  <div class="void-ambient"></div>
+
+  <iframe id="app-frame" src="about:blank" class="fixed inset-0 w-full h-full border-0 z-0 bg-[#020202]"></iframe>
+
+  <!-- O MONÓLITO -->
+  <div id="monolith-card" class="state-centered mode-closed group" onclick="Monolith.handleCardClick(event)">
+    
+    <!-- Indicador de Stealth (SVG Unlock) -->
+    <div class="stealth-indicator">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse-cyan"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="content-wrapper">
+      
+      <!-- Header -->
+      <div class="h-[76px] shrink-0 flex items-center justify-between px-6 border-b border-white/5 bg-white/[0.01]">
+        
+        <!-- Info Utilizador -->
+        <div class="flex items-center gap-4 cursor-pointer select-none group/user" onclick="Monolith.toggleExpand()">
+          <div id="avatar-container" class="w-11 h-11 rounded-xl bg-white/5 border border-white/10 overflow-hidden relative shadow-inner transition-transform group-hover/user:scale-105"></div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-extrabold text-dual-cyan tracking-[0.2em] uppercase font-mono">System</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-dual-cyan shadow-[0_0_8px_rgba(0,242,255,0.5)]"></span>
+            </div>
+            <span id="user-name" class="font-bold text-base leading-tight text-white/90">Operador</span>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex items-center gap-2.5">
+          <button onclick="document.getElementById('file-input').click()" class="header-btn active-cyan" title="Upload Módulo">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          </button>
+          <input type="file" id="file-input" accept=".html" class="hidden" onchange="Monolith.handleFileSelect(event)">
+
+          <button onclick="Monolith.toggleStealth(event)" class="header-btn active-purple" title="Modo Stealth">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+          </button>
+          
+          <div class="w-px h-5 bg-white/10 mx-1"></div>
+
+          <button id="btn-close" class="header-btn hover:!bg-red-500/10 hover:!text-red-400 hover:!border-red-500/20 opacity-0 pointer-events-none" onclick="Monolith.toggleExpand(false)">
+            <i data-lucide="shrink" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview Bar (Modo Fechado) -->
+      <div id="preview-bar" class="absolute bottom-2.5 left-20 right-20 flex justify-between items-center opacity-100 transition-opacity duration-300 pointer-events-none">
+        <span class="text-[10px] font-mono text-white/20 uppercase tracking-[0.3em]">Standby</span>
+        <span id="clock" class="text-[10px] font-mono text-white/20">00:00</span>
+      </div>
+
+      <!-- Corpo Expandido -->
+      <div id="body-content" class="flex-1 p-8 overflow-y-auto hidden opacity-0 flex-col gap-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex flex-col gap-2">
+            <label class="text-[11px] font-bold text-white/30 uppercase tracking-widest px-1">Identificação de Operador</label>
+            <input type="text" id="input-name" placeholder="Nome de utilizador..." class="input-field">
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="Monolith.openEditor()" class="flex flex-col items-center justify-center gap-2 bg-white/[0.03] border border-white/5 rounded-2xl hover:bg-white/[0.07] transition-all group p-4">
+              <i data-lucide="terminal" class="w-5 h-5 text-white/40 group-hover:text-dual-cyan"></i>
+              <span class="text-[11px] font-bold uppercase text-white/40 group-hover:text-white/70">Editor</span>
+            </button>
+            <button onclick="Monolith.toggleTheme()" class="flex flex-col items-center justify-center gap-2 bg-white/[0.03] border border-white/5 rounded-2xl hover:bg-white/[0.07] transition-all group p-4">
+              <i data-lucide="zap" class="w-5 h-5 text-white/40 group-hover:text-dual-purple"></i>
+              <span class="text-[11px] font-bold uppercase text-white/40 group-hover:text-white/70">Ações</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="drop-zone" class="relative h-28 rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.01] flex flex-col items-center justify-center gap-3 cursor-pointer transition-all hover:border-dual-cyan/40 hover:bg-dual-cyan/[0.02]" onclick="document.getElementById('file-input').click()">
+          <i data-lucide="plus-circle" class="w-6 h-6 text-white/20"></i>
+          <span class="text-xs text-white/40 font-medium font-mono uppercase tracking-wider">Drag & Drop .html</span>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-white/5">
+            <span class="text-[11px] font-mono text-white/40 uppercase tracking-widest">Memória Recente</span>
+            <button onclick="Monolith.clearStack()" class="text-[10px] text-red-400/40 hover:text-red-400 transition-colors font-bold uppercase">Limpar Tudo</button>
+          </div>
+          <div id="stack-list" class="flex flex-col gap-3 pb-6"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor Modal -->
+  <div id="editor-modal" class="editor-overlay fixed inset-0 z-[200] bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300 flex items-center justify-center">
+    <div class="w-[90%] max-w-4xl h-[80%] bg-[#0a0a0c] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-2 h-2 rounded-full bg-dual-cyan"></div>
+          <span class="font-mono text-xs text-white/60 tracking-[0.2em]">CORE_SOURCE_EDITOR</span>
+        </div>
+        <button onclick="Monolith.closeEditor()" class="text-white/40 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <textarea id="code-area" class="flex-1 bg-transparent p-6 font-mono text-sm text-dual-cyan/80 outline-none resize-none" spellcheck="false" placeholder="Escreva ou cole seu código HTML/CSS/JS aqui..."></textarea>
+      <div class="p-4 border-t border-white/5 bg-white/[0.02] flex justify-end gap-3">
+        <button onclick="Monolith.closeEditor()" class="px-6 py-2.5 text-xs font-bold text-white/40 hover:text-white uppercase tracking-wider">Cancelar</button>
+        <button onclick="Monolith.injectCode()" class="px-8 py-2.5 bg-dual-cyan text-black text-xs font-extrabold rounded-xl hover:brightness-110 shadow-lg shadow-dual-cyan/20 transition-all active:scale-95">EXECUTAR_SCRIPT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notificação -->
+  <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-[#111] border border-white/10 rounded-2xl flex items-center gap-4 shadow-2xl translate-y-24 opacity-0 transition-all duration-500 z-[999]">
+    <div class="w-2.5 h-2.5 rounded-full bg-dual-cyan shadow-[0_0_8px_var(--cyan)]"></div>
+    <span id="toast-msg" class="text-[11px] font-bold font-mono text-white/90 uppercase tracking-widest">Status: OK</span>
+  </div>
+
+  <script>
+    const Monolith = (() => {
+      // Estado com Persistência Automática
+      const state = {
+        isOpen: false,
+        isStealth: false,
+        userName: 'Operador',
+        stacks: []
+      };
+
+      const dom = {
+        card: document.getElementById('monolith-card'),
+        body: document.getElementById('body-content'),
+        preview: document.getElementById('preview-bar'),
+        btnClose: document.getElementById('btn-close'),
+        iframe: document.getElementById('app-frame'),
+        stackList: document.getElementById('stack-list'),
+        userName: document.getElementById('user-name'),
+        inputName: document.getElementById('input-name'),
+        dropZone: document.getElementById('drop-zone'),
+        avatar: document.getElementById('avatar-container'),
+        editorModal: document.getElementById('editor-modal')
+      };
+
+      function init() {
+        lucide.createIcons();
+        startClock();
+        loadSettings();
+        setupDragDrop();
+        dom.inputName.addEventListener('input', (e) => setUserName(e.target.value));
+        
+        // Se carregou colapsado, garantir UI condizente
+        if(state.isOpen) toggleExpand(true, true); 
+      }
+
+      function handleCardClick(e) {
+        if (state.isStealth) {
+          e.stopPropagation();
+          toggleStealth();
+        }
+      }
+
+      function toggleExpand(forceState, instant = false) {
+        if (state.isStealth) return;
+        
+        const target = (typeof forceState === 'boolean') ? forceState : !state.isOpen;
+        if (target === state.isOpen && !instant) return;
+
+        state.isOpen = target;
+        saveSettings();
+
+        if (state.isOpen) {
+          dom.card.classList.replace('mode-closed', 'mode-open');
+          dom.preview.style.opacity = '0';
+          dom.btnClose.style.opacity = '1';
+          dom.btnClose.style.pointerEvents = 'auto';
+          
+          setTimeout(() => {
+            dom.body.classList.remove('hidden');
+            requestAnimationFrame(() => dom.body.style.opacity = '1');
+          }, instant ? 0 : 300);
+        } else {
+          dom.body.style.opacity = '0';
+          setTimeout(() => {
+            dom.body.classList.add('hidden');
+            dom.card.classList.replace('mode-open', 'mode-closed');
+            dom.preview.style.opacity = '1';
+            dom.btnClose.style.opacity = '0';
+            dom.btnClose.style.pointerEvents = 'none';
+          }, instant ? 0 : 250);
+        }
+      }
+
+      function toggleStealth(e) {
+        if(e) e.stopPropagation();
+        
+        state.isStealth = !state.isStealth;
+        saveSettings();
+
+        if (state.isStealth) {
+          // Fade out content wrapper antes de encolher
+          const wrapper = dom.card.querySelector('.content-wrapper');
+          wrapper.style.opacity = '0';
+          wrapper.style.transform = 'scale(0.9)';
+
+          setTimeout(() => {
+            if (state.isOpen) toggleExpand(false, true);
+            dom.card.classList.remove('state-centered');
+            dom.card.classList.add('state-stealth');
+            notify("Protocolo Stealth Ativo");
+          }, 150);
+        } else {
+          dom.card.classList.remove('state-stealth');
+          dom.card.classList.add('state-centered');
+          
+          const wrapper = dom.card.querySelector('.content-wrapper');
+          setTimeout(() => {
+            wrapper.style.opacity = '1';
+            wrapper.style.transform = 'scale(1)';
+            notify("Sistemas Restaurados");
+          }, 400);
+        }
+      }
+
+      // --- Gestão de Arquivos ---
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) loadFile(file);
+      }
+
+      function loadFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          dom.iframe.srcdoc = content;
+          addToStack(file.name, content);
+          notify(`Link Estabelicido: ${file.name}`);
+          if (!state.isOpen) toggleExpand(true);
+        };
+        reader.readAsText(file);
+      }
+
+      // --- Stack & Persistência ---
+      function addToStack(name, content) {
+        const item = { id: Date.now(), name, content, time: new Date().toLocaleTimeString('pt-PT', {hour:'2-digit', minute:'2-digit'}) };
+        state.stacks.unshift(item);
+        if (state.stacks.length > 5) state.stacks.pop();
+        saveSettings();
+        renderStack();
+      }
+
+      function renderStack() {
+        if (state.stacks.length === 0) {
+          dom.stackList.innerHTML = `<div class="text-center py-6 text-[10px] text-white/10 font-mono tracking-widest italic border border-white/5 rounded-2xl">Buffer Vazio</div>`;
+          return;
+        }
+        dom.stackList.innerHTML = state.stacks.map(item => `
+          <div class="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl group transition-all hover:bg-white/[0.05] hover:border-white/10">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs font-bold text-white/70 truncate max-w-[180px]">${item.name}</span>
+              <span class="text-[9px] font-mono text-white/20 uppercase">${item.time}</span>
+            </div>
+            <button onclick="Monolith.replayStack(${item.id})" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:bg-dual-cyan hover:text-black transition-all">
+              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+            </button>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      }
+
+      function replayStack(id) {
+        const item = state.stacks.find(s => s.id === id);
+        if (item) {
+          dom.iframe.srcdoc = item.content;
+          notify(`Executando: ${item.name}`);
+        }
+      }
+
+      function clearStack() { state.stacks = []; saveSettings(); renderStack(); }
+
+      // --- Configurações ---
+      function setUserName(name) {
+        const clean = name.trim() || 'Operador';
+        state.userName = clean;
+        dom.userName.innerText = clean;
+        updateAvatar(clean);
+        saveSettings();
+      }
+
+      function updateAvatar(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        const hue = Math.abs(hash % 360);
+        dom.avatar.innerHTML = `
+          <svg viewBox="0 0 100 100" class="w-full h-full bg-[#08080a]">
+            <defs>
+              <linearGradient id="grad-${hue}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:hsl(${hue}, 80%, 60%);stop-opacity:1" />
+                <stop offset="100%" style="stop-color:hsl(${(hue+40)%360}, 80%, 50%);stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" fill="url(#grad-${hue})" opacity="0.15" />
+            <circle cx="50" cy="50" r="28" fill="url(#grad-${hue})" opacity="0.4" filter="blur(10px)" />
+            <circle cx="50" cy="50" r="18" fill="none" stroke="white" stroke-width="2" opacity="0.5" />
+            <path d="M30 75 Q50 65 70 75" stroke="white" stroke-width="2" fill="none" opacity="0.4" stroke-linecap="round" />
+          </svg>`;
+      }
+
+      function saveSettings() {
+        const data = { 
+          user: state.userName, 
+          stacks: state.stacks, 
+          isOpen: state.isOpen, 
+          isStealth: state.isStealth 
+        };
+        localStorage.setItem('dual_fusion_v2', JSON.stringify(data));
+      }
+
+      function loadSettings() {
+        const raw = localStorage.getItem('dual_fusion_v2');
+        if (raw) {
+          try {
+            const data = JSON.parse(raw);
+            state.userName = data.user || 'Operador';
+            state.stacks = data.stacks || [];
+            state.isOpen = !!data.isOpen;
+            state.isStealth = !!data.isStealth;
+            
+            dom.userName.innerText = state.userName;
+            dom.inputName.value = state.userName;
+            updateAvatar(state.userName);
+            renderStack();
+            
+            if(state.isStealth) {
+              state.isStealth = false; // Reset temporário para aplicar a função corretamente
+              toggleStealth();
+            }
+          } catch(e) { console.error("Erro ao carregar sessão"); }
+        } else {
+          updateAvatar('Operador');
+          renderStack();
+        }
+      }
+
+      // --- Modais ---
+      function openEditor() { dom.editorModal.classList.remove('pointer-events-none'); dom.editorModal.style.opacity = '1'; }
+      function closeEditor() { dom.editorModal.classList.add('pointer-events-none'); dom.editorModal.style.opacity = '0'; }
+      function injectCode() {
+        const code = document.getElementById('code-area').value;
+        if(!code.trim()) return notify("Buffer Vazio");
+        dom.iframe.srcdoc = code;
+        addToStack('Manual_Injection.src', code);
+        closeEditor();
+        notify("Injeção Completa");
+      }
+
+      // --- Auxiliares ---
+      function setupDragDrop() {
+        const z = dom.dropZone;
+        ['dragenter', 'dragover'].forEach(n => z.addEventListener(n, (e) => { e.preventDefault(); z.classList.add('!border-dual-cyan', '!bg-dual-cyan/5'); }, false));
+        ['dragleave', 'drop'].forEach(n => z.addEventListener(n, (e) => { e.preventDefault(); z.classList.remove('!border-dual-cyan', '!bg-dual-cyan/5'); }, false));
+        z.addEventListener('drop', (e) => {
+          if(e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+        }, false);
+      }
+
+      function startClock() {
+        const tick = () => {
+          document.getElementById('clock').innerText = new Date().toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
+        };
+        tick(); setInterval(tick, 1000);
+      }
+
+      function notify(msg) {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-msg').innerText = msg;
+        t.classList.remove('translate-y-24', 'opacity-0');
+        t.classList.add('translate-y-0');
+        setTimeout(() => {
+          t.classList.add('translate-y-24', 'opacity-0');
+          t.classList.remove('translate-y-0');
+        }, 3000);
+      }
+
+      function toggleTheme() { notify("Módulo: Ações Rápidas Indisponível"); }
+
+      return {
+        init, toggleExpand, toggleStealth, handleFileSelect, handleCardClick,
+        replayStack, clearStack, openEditor, closeEditor, injectCode, toggleTheme
+      };
+    })();
+
+    window.addEventListener('DOMContentLoaded', Monolith.init);
+  </script>
+</body>
+</html>
+
